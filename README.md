@@ -36,7 +36,7 @@ Builds upgraded skills in a staging directory. You test them before committing.
 
 ```bash
 # Test staged upgrades in a separate session
-cc --plugin-dir ~/.skill-doctor-staging/
+cc --plugin-dir ~/.skill-doctor/staging-<date>-<source>/
 ```
 
 When happy, say "migrate" to apply permanently (originals are backed up).
@@ -47,7 +47,7 @@ Restores skills from the last backup if upgrades cause problems.
 
 ## What It Checks
 
-- Frontmatter completeness (`allowed-tools`, `disable-model-invocation`, `model`)
+- Frontmatter completeness (`allowed-tools`, `disable-model-invocation`, `context`)
 - Dynamic context injection opportunities
 - Argument support for multi-mode skills
 - Supporting files & progressive disclosure
@@ -62,9 +62,9 @@ Restores skills from the last backup if upgrades cause problems.
 
 ## How It Works
 
-1. **Diagnose** reads all your skills/agents and scores them against 12 best-practice checks
+1. **Diagnose** reads all your skills/agents and scores them against a best-practices checklist
 2. Findings are saved to `~/.skill-doctor/diagnosis.json`
-3. **Treat** reads the diagnosis and builds upgraded skills in `~/.skill-doctor-staging/`
+3. **Treat** reads the diagnosis and builds upgraded skills in a staging directory under `~/.skill-doctor/`
 4. You test the staged skills with `cc --plugin-dir`, then migrate or discard
 5. **Rollback** restores from backup if anything breaks
 
