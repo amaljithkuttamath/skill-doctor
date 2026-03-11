@@ -8,7 +8,7 @@ allowed-tools: Read, Bash, Glob
 ## Find Backup
 
 ```bash
-ls -d ~/.skill-doctor-backup-* 2>/dev/null | sort | tail -1
+ls -d ~/.skill-doctor/backups/*/ 2>/dev/null | sort | tail -1
 ```
 
 If no backups found: "No skill-doctor backups found. Nothing to roll back."
@@ -55,7 +55,7 @@ Do NOT delete the backup directory. The user may want to reference it.
 If the user asks to roll back to a specific backup (not the latest):
 
 ```bash
-ls -d ~/.skill-doctor-backup-* 2>/dev/null | sort
+ls -d ~/.skill-doctor/backups/*/ 2>/dev/null | sort
 ```
 
 Show all available backups with timestamps. Let the user pick.

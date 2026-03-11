@@ -147,8 +147,15 @@ After silent examination:
    - "I see your [skill-name] reads [file] every time it runs. Does it feel slow to start?" (leads to dynamic injection suggestion)
    - "Your [skill-a] and [skill-b] both mention [keyword] in their descriptions. Do they ever conflict?" (leads to overlap fix)
    - "Nothing in your setup uses argument modes. Do you ever want different behavior from the same skill?" (leads to $ARGUMENTS suggestion)
-3. After questions, present a tailored prescription connecting each finding to the user's stated pain
-4. Don't dump all 10 checklist items. Only surface what's relevant to their experience.
+   - "Are there things you always want to happen before/after a skill runs? Like validation, logging, or notifications?" (leads to hooks suggestion)
+   - "Do any of your skills produce a lot of output that clutters the conversation?" (leads to context: fork suggestion)
+3. For hooks specifically, ask follow-up questions to understand the workflow:
+   - What should trigger the hook? (before a tool runs? after? on a specific tool?)
+   - What should the hook do? (validate, log, notify, block?)
+   - Should it only run during a specific skill, or always?
+   - Don't prescribe hooks unless the user describes a concrete pain. Hooks add complexity.
+4. After questions, present a tailored prescription connecting each finding to the user's stated pain
+5. Don't dump all 10 checklist items. Only surface what's relevant to their experience.
 
 End with: "Run `/skill-doctor:treat` to apply these fixes."
 

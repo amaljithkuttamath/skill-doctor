@@ -21,23 +21,32 @@ allowed-tools: Read, Write, Bash, Glob
 
 ## Setup Staging
 
-1. Check if `~/.skill-doctor-staging/` exists:
-   - If yes: "Previous staging directory found. Overwrite it, or abort?"
-   - On overwrite: `rm -rf ~/.skill-doctor-staging/`
+1. Determine staging name from the skills being upgraded:
+   - All from `~/.claude/skills/` -> `personal-skills`
+   - All from `.claude/skills/` in a repo -> `<repo-dir-name>-skills`
+   - Mixed locations -> `mixed-skills`
+   - Build directory name: `staging-<YYYYMMDD>-<source>`
+   - Full path: `~/.skill-doctor/staging-<YYYYMMDD>-<source>/`
+
+2. Check if that directory already exists:
+   - If yes: "Staging directory already exists. Overwrite, rename, or abort?"
+   - On overwrite: `rm -rf` the existing one
+   - On rename: append `-2`, `-3`, etc.
    - On abort: stop
 
-2. Create staging as a valid plugin directory:
+3. Create staging as a valid plugin directory:
    ```bash
-   mkdir -p ~/.skill-doctor-staging/.claude-plugin
-   mkdir -p ~/.skill-doctor-staging/skills
+   STAGING=~/.skill-doctor/staging-$(date +%Y%m%d)-<source>
+   mkdir -p $STAGING/.claude-plugin
+   mkdir -p $STAGING/skills
    ```
 
-3. Write staging plugin.json:
+4. Write staging plugin.json:
    ```bash
-   cat > ~/.skill-doctor-staging/.claude-plugin/plugin.json << 'STEOF'
+   cat > $STAGING/.claude-plugin/plugin.json << STEOF
    {
-     "name": "skill-doctor-staging",
-     "description": "Staged skill upgrades for testing",
+     "name": "staging-$(date +%Y%m%d)-<source>",
+     "description": "Staged skill upgrades for <source>",
      "version": "0.0.0"
    }
    STEOF
@@ -52,7 +61,7 @@ For each skill in `diagnosis.json` that has findings:
 ### 1. Copy original to staging
 
 ```bash
-cp -r <original-skill-dir> ~/.skill-doctor-staging/skills/<skill-name>/
+cp -r <original-skill-dir> $STAGING/skills/<skill-name>/
 ```
 
 ### 2. Apply fixes based on findings
@@ -98,7 +107,7 @@ Work through each finding and apply the suggestion. Reference the templates at `
 After applying fixes to a skill, show the diff:
 
 ```bash
-diff -u <original-SKILL.md> ~/.skill-doctor-staging/skills/<skill-name>/SKILL.md
+diff -u <original-SKILL.md> $STAGING/skills/<skill-name>/SKILL.md
 ```
 
 Ask: "Does this look right for [skill-name]?" before moving to the next skill.
@@ -111,7 +120,7 @@ If skill-creator was detected (check `diagnosis.json` > `integrations.skill_crea
 
 1. Run format validation on each staged skill:
    ```bash
-   python3 ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py ~/.skill-doctor-staging/skills/<skill-name>/SKILL.md
+   python3 ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py $STAGING/skills/<skill-name>/SKILL.md
    ```
 
 2. For skills with critical findings, offer blind comparison:
@@ -132,8 +141,10 @@ After all upgrades are applied:
 To test, open a new terminal and run:
 
 ```bash
-cc --plugin-dir ~/.skill-doctor-staging/
+cc --plugin-dir <staging-path>
 ```
+
+Replace `<staging-path>` with the actual `$STAGING` path you created (e.g., `~/.skill-doctor/staging-20260310-personal-skills/`).
 
 In that session, try your skills and see if they work as expected. When you're done, come back here and tell me:
 
@@ -147,11 +158,12 @@ In that session, try your skills and see if they work as expected. When you're d
 
 When the user says "migrate":
 
-1. Create backup directory:
+1. Create backup directory under `~/.skill-doctor/backups/`:
    ```bash
-   BACKUP_DIR=~/.skill-doctor-backup-$(date +%Y%m%d-%H%M%S)
+   BACKUP_DIR=~/.skill-doctor/backups/$(date +%Y%m%d-%H%M%S)-<source>
    mkdir -p $BACKUP_DIR
    ```
+   Use the same `<source>` name from the staging directory (e.g., `personal-skills`).
 
 2. Create manifest listing what's being replaced:
    ```json
@@ -171,7 +183,7 @@ When the user says "migrate":
 3. For each skill being replaced:
    ```bash
    cp -r <original-skill-dir> $BACKUP_DIR/<skill-name>/
-   cp -r ~/.skill-doctor-staging/skills/<skill-name>/* <original-skill-dir>/
+   cp -r $STAGING/skills/<skill-name>/* <original-skill-dir>/
    ```
 
 4. Clean up:
