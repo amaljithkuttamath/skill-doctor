@@ -1,0 +1,27 @@
+{
+  "name": "skill-doctor-marketplace",
+  "owner": {
+    "name": "Amaljith Kuttamath",
+    "email": "amaljithkuttamath@gmail.com"
+  },
+  "metadata": {
+    "description": "Audit, diagnose, and upgrade your Claude Code skills and agents",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "skill-doctor",
+      "source": ".",
+      "description": "Audits, diagnoses, and upgrades your Claude Code skills and agents. Three skills: /skill-doctor (diagnose), /skill-doctor:treat (fix), /skill-doctor:rollback (undo).",
+      "version": "1.0.0",
+      "author": {
+        "name": "Amaljith Kuttamath",
+        "url": "https://amaljithkuttamath.github.io"
+      },
+      "repository": "https://github.com/amaljithkuttamath/skill-doctor",
+      "license": "MIT",
+      "keywords": ["skills", "audit", "diagnosis", "upgrade", "agents", "best-practices", "optimization"],
+      "category": "developer-tools"
+    }
+  ]
+}

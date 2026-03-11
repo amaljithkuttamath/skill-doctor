@@ -4,11 +4,18 @@ Audit, diagnose, and upgrade your Claude Code skills and agents.
 
 ## Install
 
+**From GitHub (recommended):**
+```bash
+claude plugin marketplace add amaljithkuttamath/skill-doctor
+claude plugin install skill-doctor@skill-doctor-marketplace
+```
+
+**From official marketplace** (if available):
 ```
 /plugin install skill-doctor@official-marketplace
 ```
 
-Or test locally:
+**Local testing:**
 ```bash
 cc --plugin-dir /path/to/skill-doctor
 ```
