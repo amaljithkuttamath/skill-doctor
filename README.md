@@ -1,85 +1,112 @@
 # skill-doctor
 
-Audit, diagnose, and upgrade your Claude Code skills and agents.
+Your Claude Code skills probably have problems you don't know about. Missing tool restrictions, wasted tokens from inline file reads, vague descriptions that never auto-trigger. skill-doctor finds these issues and fixes them.
+
+Three commands. Diagnose, treat, rollback.
 
 ## Install
 
-**From GitHub (recommended):**
 ```bash
 claude plugin marketplace add amaljithkuttamath/skill-doctor
 claude plugin install skill-doctor@skill-doctor-marketplace
 ```
 
-**From official marketplace** (if available):
-```
-/plugin install skill-doctor@official-marketplace
-```
+Or test locally:
 
-**Local testing:**
 ```bash
 cc --plugin-dir /path/to/skill-doctor
 ```
 
-## Usage
+## Commands
 
-### `/skill-doctor` - Diagnose
+### `/skill-doctor` — Diagnose
 
-Examines your skills, agents, and CLAUDE.md. Three modes:
+Reads every skill, agent definition, and CLAUDE.md in your setup. Scores each skill against a best-practices checklist and saves findings to `~/.skill-doctor/diagnosis.json`.
 
-- `/skill-doctor` - interactive intake, asks what's bothering you
-- `/skill-doctor checkup` - automated scan with report card
-- `/skill-doctor consult` - guided Q&A connecting findings to your pain points
+Three modes:
 
-### `/skill-doctor:treat` - Fix
+| Mode | What it does |
+|------|-------------|
+| `/skill-doctor` | Interactive intake. Asks what's bothering you, then routes to the right analysis. |
+| `/skill-doctor checkup` | Automated scan. Produces a report card with scores and top recommendations. |
+| `/skill-doctor consult` | Guided Q&A. Connects findings to your actual pain points, one question at a time. |
 
-Builds upgraded skills in a staging directory. You test them before committing.
+### `/skill-doctor:treat` — Fix
+
+Reads the diagnosis and builds upgraded versions of your skills in a staging directory. Nothing touches your originals until you say so.
 
 ```bash
-# Test staged upgrades in a separate session
+# Test the upgrades in a separate session
 cc --plugin-dir ~/.skill-doctor/staging-<date>-<source>/
 ```
 
-When happy, say "migrate" to apply permanently (originals are backed up).
+If the upgrades work, say **migrate**. Originals get backed up to `~/.skill-doctor/backups/` before anything is replaced.
 
-### `/skill-doctor:rollback` - Undo
+If they don't, say **discard** and nothing changes.
 
-Restores skills from the last backup if upgrades cause problems.
+### `/skill-doctor:rollback` — Undo
+
+Restores your original skills from the most recent backup. One command, no questions.
 
 ## What It Checks
 
-- Frontmatter completeness (`allowed-tools`, `disable-model-invocation`, `context`)
-- Dynamic context injection opportunities
-- Argument support for multi-mode skills
-- Supporting files & progressive disclosure
-- Skill-scoped hooks
-- Overlap between skills
-- CLAUDE.md content that should be extracted to skills
-- Agent-skill wiring
-- Model override opportunities
-- Context isolation (`context: fork`)
-- Description trigger quality (specific phrases, paraphrased variants)
-- Security (XML in frontmatter, reserved names, hardcoded secrets)
+| Check | What it catches |
+|-------|----------------|
+| Frontmatter completeness | Missing `allowed-tools`, `disable-model-invocation`, `context` |
+| Dynamic context injection | File reads and shell commands that should use `!command` syntax |
+| Argument support | Multi-mode skills without `$ARGUMENTS` routing |
+| Supporting files & progressive disclosure | SKILL.md too large, missing the three-level system (frontmatter, body, linked files) |
+| Skill-scoped hooks | Pre/post actions hardcoded as instructions instead of hooks |
+| Overlap detection | Multiple skills triggering on the same keywords |
+| CLAUDE.md audit | Reusable workflows that waste context every session |
+| Agent wiring | Agents referencing missing skills, skills that should be agent-backed |
+| Model override | Opus used for tasks sonnet could handle |
+| Context isolation | Verbose skills that should run in `context: fork` |
+| Description triggers | Vague descriptions that won't auto-invoke reliably |
+| Security | XML injection in frontmatter, reserved names, hardcoded secrets |
+
+Each check includes severity scoring (critical, warning, suggestion) and specific fix recommendations. The full checklist with examples lives in `skills/skill-doctor/references/best-practices.md`.
 
 ## How It Works
 
-1. **Diagnose** reads all your skills/agents and scores them against a best-practices checklist
+```
+/skill-doctor checkup
+    │
+    ▼
+  Discover skills ──► Score against checklist ──► Save diagnosis.json
+                                                        │
+                                                        ▼
+                                              /skill-doctor:treat
+                                                        │
+                                                        ▼
+                                              Build staged upgrades
+                                                        │
+                                              ┌─────────┼─────────┐
+                                              ▼         ▼         ▼
+                                           migrate   tweak    discard
+                                              │         │
+                                              ▼         ▼
+                                        backup + apply  adjust staged
+```
+
+1. **Diagnose** discovers all skills (`~/.claude/skills/`, `.claude/skills/`, plugins) and scores them
 2. Findings are saved to `~/.skill-doctor/diagnosis.json`
-3. **Treat** reads the diagnosis and builds upgraded skills in a staging directory under `~/.skill-doctor/`
-4. You test the staged skills with `cc --plugin-dir`, then migrate or discard
-5. **Rollback** restores from backup if anything breaks
+3. **Treat** reads the diagnosis and builds upgraded skills in `~/.skill-doctor/staging-<date>-<source>/`
+4. You test with `cc --plugin-dir`, then migrate (with backup) or discard
+5. **Rollback** restores from `~/.skill-doctor/backups/` if anything breaks
 
 ## Optional Integrations
 
-These enhance skill-doctor but aren't required:
-
-- **Context7** - fetches latest Claude Code docs for up-to-date best practices
-- **skill-creator** - adds format validation and blind comparison eval for upgrades
+| Integration | What it adds |
+|-------------|-------------|
+| [Context7](https://context7.com) | Fetches latest Claude Code docs so the checklist stays current |
+| [skill-creator](https://github.com/anthropics/skills) | Format validation and blind comparison evals for upgrades |
 
 Without these, skill-doctor uses its built-in checklist and shows diffs instead of running evals.
 
 ## Requirements
 
-- Claude Code
+Claude Code.
 
 ## License
 
