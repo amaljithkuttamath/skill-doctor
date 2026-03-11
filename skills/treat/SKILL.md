@@ -187,9 +187,9 @@ When the user says "migrate":
    cp -r $STAGING/skills/<skill-name>/* <original-skill-dir>/
    ```
 
-4. Clean up:
+4. Clean up the staging directory:
    ```bash
-   rm -rf ~/.skill-doctor-staging
+   rm -rf $STAGING
    ```
 
 5. Confirm:
@@ -203,7 +203,7 @@ When the user says "migrate":
 When the user says "discard":
 
 ```bash
-rm -rf ~/.skill-doctor-staging
+rm -rf $STAGING
 ```
 
 "Staging discarded. Your original skills are untouched."

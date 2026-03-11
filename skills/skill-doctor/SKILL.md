@@ -86,7 +86,7 @@ If skill-creator not available, skip this step.
 
 ### 4. Score each skill
 
-For each skill, check against the best-practices checklist (13 items). Score:
+For each skill, check against every item in the best-practices checklist. Score:
 
 - **Healthy**: 0-1 findings (suggestion severity only)
 - **Warning**: 2-3 findings, or any warning-severity item
@@ -94,8 +94,8 @@ For each skill, check against the best-practices checklist (13 items). Score:
 
 **Severity guide:**
 - **Critical**: `allowed-tools` missing on a skill that writes files. `disable-model-invocation` missing on a skill with side effects. Major overlap with another skill.
-- **Warning**: No dynamic injection where it would help. No `$ARGUMENTS` on a multi-mode skill. Missing supporting files. Wrong model override. Description missing trigger phrases. Poor progressive disclosure (too much in frontmatter or everything in SKILL.md body).
-- **Suggestion**: Could benefit from `context: fork`. Could add hooks. Could use a template. Security check notes (XML brackets, reserved names, hardcoded secrets).
+- **Warning**: No dynamic injection where it would help. No `$ARGUMENTS` on a multi-mode skill. Missing supporting files or poor progressive disclosure. Wrong model override. Description missing trigger phrases.
+- **Suggestion**: Could benefit from `context: fork`. Could add hooks. Security check notes (XML brackets, reserved names, hardcoded secrets).
 
 ### 5. Check cross-cutting concerns
 
@@ -143,21 +143,21 @@ Save diagnosis (see Persistence section below).
 After silent examination:
 
 1. Start with the user's stated pain point (from intake, or ask if they came here directly)
-2. Ask up to 5 questions, one at a time. Connect each question to a finding from the examination:
+2. Ask up to 5 questions, chosen from these based on findings. One at a time. Connect each question to a finding from the examination:
    - "I see your [skill-name] reads [file] every time it runs. Does it feel slow to start?" (leads to dynamic injection suggestion)
    - "Your [skill-a] and [skill-b] both mention [keyword] in their descriptions. Do they ever conflict?" (leads to overlap fix)
    - "Nothing in your setup uses argument modes. Do you ever want different behavior from the same skill?" (leads to $ARGUMENTS suggestion)
    - "Are there things you always want to happen before/after a skill runs? Like validation, logging, or notifications?" (leads to hooks suggestion)
    - "Do any of your skills produce a lot of output that clutters the conversation?" (leads to context: fork suggestion)
    - "Do your skills load automatically when you expect them to, or do you find yourself typing the slash command every time?" (leads to description trigger quality)
-   - "Is your SKILL.md getting long? Over 300 lines?" (leads to progressive disclosure, move detail to references/)
+   - "Is your SKILL.md getting long? Over 300 lines?" (leads to supporting files & progressive disclosure)
 3. For hooks specifically, ask follow-up questions to understand the workflow:
    - What should trigger the hook? (before a tool runs? after? on a specific tool?)
    - What should the hook do? (validate, log, notify, block?)
    - Should it only run during a specific skill, or always?
    - Don't prescribe hooks unless the user describes a concrete pain. Hooks add complexity.
 4. After questions, present a tailored prescription connecting each finding to the user's stated pain
-5. Don't dump all 10 checklist items. Only surface what's relevant to their experience.
+5. Don't dump all checklist items. Only surface what's relevant to their experience.
 
 End with: "Run `/skill-doctor:treat` to apply these fixes."
 

@@ -6,9 +6,11 @@ Use this checklist to audit each skill. Each item includes what to check, why it
 
 ## 1. Frontmatter Completeness
 
-**Check:** Does the skill define `allowed-tools`, `disable-model-invocation`, `model`, `argument-hint`, and `context` where appropriate?
+**Check:** Does the skill define `allowed-tools`, `disable-model-invocation`, and `context` where appropriate?
 
-**Why:** Missing frontmatter means the skill runs with full tool access, may auto-trigger when it shouldn't, and uses the default model even for simple tasks.
+**Why:** Missing `allowed-tools` means the skill runs with full tool access. Missing `disable-model-invocation` means Claude can auto-trigger side-effecting skills. Missing `context` means verbose skills pollute the main conversation.
+
+Note: `model` is covered by check 9 (Model Override). `argument-hint` is covered by check 3 (Argument Support). Description quality is covered by check 10 (Description Trigger Quality).
 
 **Bad:**
 ```yaml
@@ -25,7 +27,6 @@ name: deploy
 description: Deploy to production. Use when code is tested and ready for release.
 disable-model-invocation: true
 allowed-tools: Bash, Read
-model: sonnet
 ---
 ```
 
@@ -82,13 +83,18 @@ argument-hint: [quick|deep]
 
 ---
 
-## 4. Supporting Files
+## 4. Supporting Files & Progressive Disclosure
 
-**Check:** Would templates, references, or examples in the skill directory improve output quality or keep SKILL.md under 500 lines?
+**Check:** Is SKILL.md under 500 lines? Are templates, references, and examples in separate files? Is the skill using the three-level system effectively?
 
-**Why:** Large SKILL.md files waste context. Supporting files load on demand. Templates give Claude a concrete target format. Examples show what "good" looks like.
+**Why:** Skills use progressive disclosure: frontmatter description (always loaded in system prompt) -> SKILL.md body (loaded when relevant) -> linked files (loaded on demand). Large SKILL.md files waste context. Supporting files load on demand. Templates give Claude a concrete target format.
 
-**Bad:** A 800-line SKILL.md with inline templates, API docs, and examples all in one file.
+**Three-level system:**
+- Frontmatter description: what it does + trigger phrases (under 200 chars)
+- SKILL.md body: core workflow steps (under 500 lines)
+- `references/`, `templates/`, `examples/`: detailed docs, long examples, domain knowledge
+
+**Bad:** An 800-line SKILL.md with inline templates, API docs, and examples all in one file. Or a 500-character description that includes step-by-step instructions in the frontmatter.
 
 **Good:**
 ```
@@ -246,22 +252,7 @@ description: Manages Linear project workflows including sprint planning, task cr
 
 ---
 
-## 12. Progressive Disclosure
-
-**Check:** Is the skill using the three-level system effectively? Frontmatter (always loaded) -> SKILL.md body (loaded when relevant) -> linked files (loaded on demand)?
-
-**Why:** Everything in the frontmatter description goes into Claude's system prompt for every conversation. The SKILL.md body loads only when Claude thinks the skill is relevant. Linked files load only when Claude navigates to them. Putting too much in earlier levels wastes tokens.
-
-**Bad:** A skill with a 500-character description that includes step-by-step instructions in the frontmatter.
-
-**Good:**
-- Frontmatter description: what it does + trigger phrases (under 200 chars)
-- SKILL.md body: core workflow steps
-- `references/`: detailed API docs, long examples, domain knowledge
-
----
-
-## 13. Security
+## 12. Security
 
 **Check:** Does the frontmatter contain XML angle brackets (`<` or `>`)? Does the skill name contain "claude" or "anthropic"?
 
