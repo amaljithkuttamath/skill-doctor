@@ -57,10 +57,13 @@ Restores skills from the last backup if upgrades cause problems.
 - Agent-skill wiring
 - Model override opportunities
 - Context isolation (`context: fork`)
+- Description trigger quality (specific phrases, paraphrased variants)
+- Progressive disclosure (three-level system usage)
+- Security (XML in frontmatter, reserved names, hardcoded secrets)
 
 ## How It Works
 
-1. **Diagnose** reads all your skills/agents and scores them against best practices
+1. **Diagnose** reads all your skills/agents and scores them against 13 best-practice checks
 2. Findings are saved to `~/.skill-doctor/diagnosis.json`
 3. **Treat** reads the diagnosis and builds upgraded skills in `~/.skill-doctor-staging/`
 4. You test the staged skills with `cc --plugin-dir`, then migrate or discard

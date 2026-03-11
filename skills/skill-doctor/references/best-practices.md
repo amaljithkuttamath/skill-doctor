@@ -219,3 +219,54 @@ context: fork
 agent: general-purpose
 ---
 ```
+
+---
+
+## 11. Description Trigger Quality
+
+**Check:** Does the description include specific phrases users would actually say? Does it cover paraphrased variants?
+
+**Why:** The description is how Claude decides whether to load the skill. Vague descriptions undertrigger. Missing trigger phrases mean users have to invoke manually. The description must contain BOTH what the skill does AND when to use it.
+
+**Bad:**
+```yaml
+---
+description: Helps with projects.
+---
+```
+
+**Good:**
+```yaml
+---
+description: Manages Linear project workflows including sprint planning, task creation, and status tracking. Use when user mentions "sprint", "Linear tasks", "project planning", or asks to "create tickets".
+---
+```
+
+**Debugging:** Ask Claude "When would you use the [skill-name] skill?" It will quote the description back. Adjust based on what's missing.
+
+---
+
+## 12. Progressive Disclosure
+
+**Check:** Is the skill using the three-level system effectively? Frontmatter (always loaded) -> SKILL.md body (loaded when relevant) -> linked files (loaded on demand)?
+
+**Why:** Everything in the frontmatter description goes into Claude's system prompt for every conversation. The SKILL.md body loads only when Claude thinks the skill is relevant. Linked files load only when Claude navigates to them. Putting too much in earlier levels wastes tokens.
+
+**Bad:** A skill with a 500-character description that includes step-by-step instructions in the frontmatter.
+
+**Good:**
+- Frontmatter description: what it does + trigger phrases (under 200 chars)
+- SKILL.md body: core workflow steps
+- `references/`: detailed API docs, long examples, domain knowledge
+
+---
+
+## 13. Security
+
+**Check:** Does the frontmatter contain XML angle brackets (`<` or `>`)? Does the skill name contain "claude" or "anthropic"?
+
+**Why:** Frontmatter appears in Claude's system prompt. XML brackets could inject instructions. Skill names with "claude" or "anthropic" are reserved by Anthropic and will be rejected.
+
+**Also check:**
+- No executable code in YAML values (safe YAML parsing prevents this, but malformed YAML can cause upload failures)
+- No hardcoded secrets, API keys, or credentials in SKILL.md or supporting files
