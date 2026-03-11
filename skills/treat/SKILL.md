@@ -3,6 +3,7 @@ name: treat
 description: Apply skill-doctor diagnosis by building upgraded skills in a staging directory for testing. Run /skill-doctor or /skill-doctor checkup first to generate a diagnosis.
 disable-model-invocation: true
 allowed-tools: Read, Write, Bash, Glob
+model: sonnet
 ---
 
 ## Load Diagnosis

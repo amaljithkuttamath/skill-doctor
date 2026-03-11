@@ -3,6 +3,7 @@ name: rollback
 description: Restore skills from the last skill-doctor backup. Use if upgraded skills cause problems after migration.
 disable-model-invocation: true
 allowed-tools: Read, Bash, Glob
+model: sonnet
 ---
 
 ## Find Backup
