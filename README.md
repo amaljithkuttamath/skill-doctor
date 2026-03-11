@@ -73,7 +73,7 @@ Each check includes severity scoring (critical, warning, suggestion) and specifi
 /skill-doctor checkup
     │
     ▼
-  Discover skills ──► Score against checklist ──► Save diagnosis.json
+  Discover skills ──► Find installed guides ──► Score against checklist ──► Save diagnosis.json
                                                         │
                                                         ▼
                                               /skill-doctor:treat
@@ -89,20 +89,25 @@ Each check includes severity scoring (critical, warning, suggestion) and specifi
                                         backup + apply  adjust staged
 ```
 
-1. **Diagnose** discovers all skills (`~/.claude/skills/`, `.claude/skills/`, plugins) and scores them
-2. Findings are saved to `~/.skill-doctor/diagnosis.json`
-3. **Treat** reads the diagnosis and builds upgraded skills in `~/.skill-doctor/staging-<date>-<source>/`
-4. You test with `cc --plugin-dir`, then migrate (with backup) or discard
-5. **Rollback** restores from `~/.skill-doctor/backups/` if anything breaks
+1. **Diagnose** discovers all skills (`~/.claude/skills/`, `.claude/skills/`, plugins) and any installed skill-authoring guides
+2. Scores against the built-in checklist, augmented by any guides it finds (e.g. superpowers writing-skills, Anthropic best practices)
+3. Findings are saved to `~/.skill-doctor/diagnosis.json`
+4. **Treat** reads the diagnosis and builds upgraded skills in `~/.skill-doctor/staging-<date>-<source>/`
+5. You test with `cc --plugin-dir`, then migrate (with backup) or discard
+6. **Rollback** restores from `~/.skill-doctor/backups/` if anything breaks
 
-## Optional Integrations
+## Integrations
+
+skill-doctor dynamically discovers installed guides and reference materials at scan time. If you have plugins like superpowers (with its writing-skills guide and Anthropic best practices doc), skill-doctor reads them and adds any checks not already in the baseline. No configuration needed.
+
+These optional integrations add more capabilities:
 
 | Integration | What it adds |
 |-------------|-------------|
-| [Context7](https://context7.com) | Fetches latest Claude Code docs so the checklist stays current |
+| [Context7](https://context7.com) | Fetches latest Claude Code docs for checks that go beyond installed guides |
 | [skill-creator](https://github.com/anthropics/skills) | Format validation and blind comparison evals for upgrades |
 
-Without these, skill-doctor uses its built-in checklist and shows diffs instead of running evals.
+Without these, skill-doctor uses its built-in checklist plus whatever guides it finds locally.
 
 ## Requirements
 

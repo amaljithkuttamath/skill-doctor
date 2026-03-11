@@ -9,6 +9,7 @@ allowed-tools: Read, Glob, Grep, Bash, Write
 
 - Claude Code: !`claude --version 2>/dev/null || echo "unknown"`
 - skill-creator: !`ls ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/SKILL.md 2>/dev/null && echo "available" || echo "not installed"`
+- Installed plugins: !`ls -d ~/.claude/plugins/cache/*/skills/*/SKILL.md ~/.claude/plugins/cache/*/*/skills/*/SKILL.md 2>/dev/null | head -30 || echo "none found"`
 
 ## Mode
 
@@ -63,18 +64,39 @@ This step is always run first, silently for Consult, with output for Checkup.
 
 Use Glob to find all matching files. Read each one.
 
-### 2. Fetch latest best practices
+### 2. Discover installed guides and references
 
-Try Context7 first:
+Dynamically search for skill-authoring guides, best-practice docs, and reference materials across the user's Claude Code installation. Do NOT hardcode paths. Search these locations using Glob:
+
+```
+# Plugin skill-authoring guides (e.g. superpowers writing-skills, skill-creator)
+~/.claude/plugins/cache/*/skills/*/references/*.md
+~/.claude/plugins/cache/*/*/skills/*/references/*.md
+
+# Any file named *best-practices* or *anthropic* in plugin caches
+~/.claude/plugins/cache/**/*best-practices*.md
+~/.claude/plugins/cache/**/*anthropic*.md
+
+# Marketplace plugins
+~/.claude/plugins/marketplaces/*/plugins/*/skills/*/references/*.md
+```
+
+Read any discovered guides that relate to skill authoring, frontmatter, or Claude Code best practices. Extract patterns or checks not already in the baseline checklist. Note the source so findings can reference it.
+
+### 3. Fetch latest docs via Context7 (if available)
+
+Try Context7:
 1. Use `resolve-library-id` tool with `libraryName: "claude code"`, `query: "skills SKILL.md frontmatter best practices"`
 2. If it resolves, use `query-docs` with the library ID to fetch latest skill docs
-3. Note any new features or patterns not in the hardcoded checklist
+3. Note any new features or patterns not covered by discovered guides or the baseline checklist
 
-If Context7 is unavailable (tool doesn't exist or fails), proceed with hardcoded checklist only.
+If Context7 is unavailable (tool doesn't exist or fails), skip this step.
 
-Always load the baseline: read `${CLAUDE_SKILL_DIR}/references/best-practices.md`
+### 4. Load baseline checklist
 
-### 3. Run format validation (if skill-creator available)
+Always read `${CLAUDE_SKILL_DIR}/references/best-practices.md` as the scoring baseline. Merge any additional checks discovered in steps 2-3. The baseline checklist is the minimum; dynamically discovered guides can add checks but never remove them.
+
+### 5. Run format validation (if skill-creator available)
 
 If skill-creator was detected in Environment:
 ```bash
@@ -84,7 +106,7 @@ Run on each discovered skill. Record pass/fail.
 
 If skill-creator not available, skip this step.
 
-### 4. Score each skill
+### 6. Score each skill
 
 For each skill, check against every item in the best-practices checklist. Score:
 
@@ -97,7 +119,7 @@ For each skill, check against every item in the best-practices checklist. Score:
 - **Warning**: No dynamic injection where it would help. No `$ARGUMENTS` on a multi-mode skill. Missing supporting files or poor progressive disclosure. Wrong model override. Description missing trigger phrases.
 - **Suggestion**: Could benefit from `context: fork`. Could add hooks. Security check notes (XML brackets, reserved names, hardcoded secrets).
 
-### 5. Check cross-cutting concerns
+### 7. Check cross-cutting concerns
 
 - **Overlap**: Compare skill descriptions pairwise. Flag if two skills share 3+ keywords or cover similar workflows.
 - **CLAUDE.md bloat**: If CLAUDE.md > 200 lines, check for multi-step workflows that should be skills.
@@ -182,7 +204,8 @@ Write to `~/.skill-doctor/diagnosis.json`:
   "mode": "checkup|consult",
   "integrations": {
     "context7": true|false,
-    "skill_creator": true|false
+    "skill_creator": true|false,
+    "discovered_guides": ["<paths to any guides found in step 2>"]
   },
   "skills_examined": [
     {
