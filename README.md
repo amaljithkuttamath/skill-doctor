@@ -21,7 +21,7 @@ cc --plugin-dir /path/to/skill-doctor
 
 ### `/skill-doctor` — Diagnose
 
-Reads every skill, agent definition, and CLAUDE.md in your setup. Scores each skill against a best-practices checklist and saves findings to `~/.skill-doctor/diagnosis.json`.
+Reads every skill, agent definition, and CLAUDE.md in your setup. Uses Claude Code's built-in `claude-code-guide` agent to evaluate each skill against current best practices, then saves findings to `~/.skill-doctor/diagnosis.json`.
 
 Three modes:
 
@@ -50,22 +50,13 @@ Restores your original skills from the most recent backup. One command, no quest
 
 ## What It Checks
 
-| Check | What it catches |
-|-------|----------------|
-| Frontmatter completeness | Missing `allowed-tools`, `disable-model-invocation`, `context` |
-| Dynamic context injection | File reads and shell commands that should use `!command` syntax |
-| Argument support | Multi-mode skills without `$ARGUMENTS` routing |
-| Supporting files & progressive disclosure | SKILL.md too large, missing the three-level system (frontmatter, body, linked files) |
-| Skill-scoped hooks | Pre/post actions hardcoded as instructions instead of hooks |
-| Overlap detection | Multiple skills triggering on the same keywords |
-| CLAUDE.md audit | Reusable workflows that waste context every session |
-| Agent wiring | Agents referencing missing skills, skills that should be agent-backed |
-| Model override | Opus used for tasks sonnet could handle |
-| Context isolation | Verbose skills that should run in `context: fork` |
-| Description triggers | Vague descriptions that won't auto-invoke reliably |
-| Security | XML injection in frontmatter, reserved names, hardcoded secrets |
+skill-doctor doesn't use a hardcoded checklist. It sends each skill to Claude Code's `claude-code-guide` agent, which evaluates it against Claude Code's current documentation and capabilities. This means:
 
-Each check includes severity scoring (critical, warning, suggestion) and specific fix recommendations. The full checklist with examples lives in `skills/skill-doctor/references/best-practices.md`.
+- Checks stay current as Claude Code adds new features (hooks, scripts, frontmatter fields)
+- The agent understands mechanism tradeoffs (when to use a hook vs an instruction vs a script vs dynamic injection)
+- Findings include specific fixes, not generic advice
+
+It also checks cross-cutting concerns: overlap between skills, CLAUDE.md content that should be extracted to skills, and agent-skill wiring gaps.
 
 ## How It Works
 
@@ -73,7 +64,7 @@ Each check includes severity scoring (critical, warning, suggestion) and specifi
 /skill-doctor checkup
     │
     ▼
-  Discover skills ──► Ask claude-code-guide ──► Score against checklist ──► Save diagnosis.json
+  Discover skills ──► claude-code-guide evaluates each ──► Score + save diagnosis.json
                                                         │
                                                         ▼
                                               /skill-doctor:treat
@@ -90,10 +81,10 @@ Each check includes severity scoring (critical, warning, suggestion) and specifi
 ```
 
 1. **Diagnose** discovers all skills (`~/.claude/skills/`, `.claude/skills/`, plugins)
-2. Uses Claude Code's built-in `claude-code-guide` agent to fetch the latest skill best practices
-3. Scores against the built-in checklist, augmented by whatever the guide agent returns
-4. Findings are saved to `~/.skill-doctor/diagnosis.json`
-5. **Treat** reads the diagnosis and builds upgraded skills in `~/.skill-doctor/staging-<date>-<source>/`
+2. Sends each skill to the `claude-code-guide` agent for evaluation against current Claude Code docs
+3. Scores each skill based on the agent's findings, saves to `~/.skill-doctor/diagnosis.json`
+4. **Treat** reads the diagnosis and asks `claude-code-guide` how to implement each fix
+5. Builds upgraded skills in `~/.skill-doctor/staging-<date>-<source>/`
 6. You test with `cc --plugin-dir`, then migrate (with backup) or discard
 7. **Rollback** restores from `~/.skill-doctor/backups/` if anything breaks
 

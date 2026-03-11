@@ -2,7 +2,7 @@
 name: treat
 description: Apply skill-doctor diagnosis by building upgraded skills in a staging directory for testing. Run /skill-doctor or /skill-doctor checkup first to generate a diagnosis.
 disable-model-invocation: true
-allowed-tools: Read, Write, Bash, Glob
+allowed-tools: Read, Write, Bash, Glob, Agent
 model: sonnet
 ---
 
@@ -67,41 +67,13 @@ cp -r <original-skill-dir> $STAGING/skills/<skill-name>/
 
 ### 2. Apply fixes based on findings
 
-Work through each finding and apply the suggestion. Reference the templates at `${CLAUDE_SKILL_DIR}/templates/` for structure guidance.
+For each finding in the diagnosis, apply the suggestion from the `claude-code-guide` agent's evaluation. The diagnosis contains specific fixes for each issue, use those directly.
 
-**Common upgrade operations:**
+If a finding requires understanding the correct Claude Code mechanism (e.g. converting instructions to hooks, writing scripts, setting up dynamic injection), spawn an Agent with `subagent_type: "claude-code-guide"` and ask it for the exact implementation:
 
-**Adding frontmatter fields:**
-- Add `allowed-tools` listing only the tools the skill actually uses
-- Add `disable-model-invocation: true` if the skill has side effects (writes files, runs commands, sends messages)
-- Add `model: sonnet` if the skill does simple tasks (formatting, status checks, lookups)
-- Add `argument-hint` if the skill has multiple modes
+> "I need to apply this fix to a Claude Code skill: [finding description and suggestion from diagnosis]. Here is the current SKILL.md: [content]. Show me the exact changes needed, including any new files (hooks, scripts, supporting files) that should be created."
 
-**Converting to dynamic injection:**
-- Find instructions like "Read the file at X" or "Run command Y"
-- Replace with `!`command`` syntax in the SKILL.md
-- Only convert reads/commands that should run at load time, not conditionally
-
-**Adding $ARGUMENTS support:**
-- If the skill has if/else branches for different modes, add `argument-hint` to frontmatter
-- Add a mode router section that checks `$ARGUMENTS[0]`
-
-**Creating supporting files:**
-- If SKILL.md > 500 lines, extract reference material to `references/` directory
-- If the skill generates structured output, create a template in `templates/`
-- Reference supporting files with `${CLAUDE_SKILL_DIR}/path`
-
-**Adding context: fork:**
-- If the skill reads many files or generates verbose output, add `context: fork` and `agent: general-purpose`
-- Don't fork interactive skills that need user back-and-forth
-
-**Fixing overlap:**
-- If two skills overlap, sharpen their descriptions to trigger on distinct keywords
-- Or merge them into one skill with `$ARGUMENTS` for different modes
-
-**Extracting from CLAUDE.md:**
-- If `claude_md_findings` exist, create new skill files from the extracted content
-- Put them in staging alongside the upgraded skills
+Use the agent's response to make the changes. This ensures upgrades use the correct, current syntax for hooks, scripts, frontmatter fields, and other Claude Code features.
 
 ### 3. Show diff per skill
 

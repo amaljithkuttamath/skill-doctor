@@ -63,21 +63,26 @@ This step is always run first, silently for Consult, with output for Checkup.
 
 Use Glob to find all matching files. Read each one.
 
-### 2. Fetch latest skill best practices
+### 2. Evaluate each skill with claude-code-guide
 
-Use the `claude-code-guide` subagent to ask Claude Code's own documentation for the latest best practices. Spawn an Agent with `subagent_type: "claude-code-guide"` and ask it:
+For each discovered skill, spawn an Agent with `subagent_type: "claude-code-guide"` and send it the skill's full SKILL.md content (including any supporting files in the skill directory). Ask it:
 
-> "What are the current best practices for building Claude Code skills? Include: SKILL.md frontmatter fields and their purpose, dynamic context injection with !command syntax, $ARGUMENTS support, progressive disclosure (three-level system), allowed-tools restrictions, disable-model-invocation, context: fork, model overrides, description trigger quality, hooks, and any recent changes to the skills system."
+> "Here is a Claude Code skill. Review it against Claude Code's current documentation and capabilities. For each issue you find, state the severity (critical/warning/suggestion) and a specific fix.
+>
+> Evaluate:
+> - Is the skill using the right mechanism for each workflow step? (hooks vs instructions vs scripts vs dynamic injection)
+> - Are frontmatter fields correct? (allowed-tools, disable-model-invocation, context, model, description, argument-hint)
+> - Will the description trigger auto-invocation reliably?
+> - Is the skill structured well? (size, progressive disclosure, supporting files)
+> - Anything else that doesn't match current best practices.
+>
+> [Full SKILL.md content here]"
 
-The agent has access to Claude Code's built-in documentation and will return up-to-date guidance. Extract any checks or patterns not already in the baseline checklist.
+The `claude-code-guide` agent knows Claude Code's current hooks system, script support, skill features, and agent capabilities. It decides what mechanism each workflow should use. Do not second-guess its evaluation with hardcoded rules.
 
-If the agent call fails or returns nothing useful, proceed with the baseline checklist only.
+If the agent call fails for a skill, record `"evaluation": "failed"` and move on.
 
-### 3. Load baseline checklist
-
-Always read `${CLAUDE_SKILL_DIR}/references/best-practices.md` as the scoring baseline. Merge any additional checks from step 2. The baseline is the minimum; the guide agent can add checks but never remove them.
-
-### 4. Run format validation (if skill-creator available)
+### 3. Run format validation (if skill-creator available)
 
 If skill-creator was detected in Environment:
 ```bash
@@ -87,20 +92,15 @@ Run on each discovered skill. Record pass/fail.
 
 If skill-creator not available, skip this step.
 
-### 5. Score each skill
+### 4. Score each skill
 
-For each skill, check against every item in the best-practices checklist. Score:
+Use the `claude-code-guide` agent's findings to score:
 
 - **Healthy**: 0-1 findings (suggestion severity only)
 - **Warning**: 2-3 findings, or any warning-severity item
 - **Critical**: 4+ findings, or any critical-severity item
 
-**Severity guide:**
-- **Critical**: `allowed-tools` missing on a skill that writes files. `disable-model-invocation` missing on a skill with side effects. Major overlap with another skill.
-- **Warning**: No dynamic injection where it would help. No `$ARGUMENTS` on a multi-mode skill. Missing supporting files or poor progressive disclosure. Wrong model override. Description missing trigger phrases.
-- **Suggestion**: Could benefit from `context: fork`. Could add hooks. Security check notes (XML brackets, reserved names, hardcoded secrets).
-
-### 6. Check cross-cutting concerns
+### 5. Check cross-cutting concerns
 
 - **Overlap**: Compare skill descriptions pairwise. Flag if two skills share 3+ keywords or cover similar workflows.
 - **CLAUDE.md bloat**: If CLAUDE.md > 200 lines, check for multi-step workflows that should be skills.
@@ -146,21 +146,14 @@ Save diagnosis (see Persistence section below).
 After silent examination:
 
 1. Start with the user's stated pain point (from intake, or ask if they came here directly)
-2. Ask up to 5 questions, chosen from these based on findings. One at a time. Connect each question to a finding from the examination:
-   - "I see your [skill-name] reads [file] every time it runs. Does it feel slow to start?" (leads to dynamic injection suggestion)
-   - "Your [skill-a] and [skill-b] both mention [keyword] in their descriptions. Do they ever conflict?" (leads to overlap fix)
-   - "Nothing in your setup uses argument modes. Do you ever want different behavior from the same skill?" (leads to $ARGUMENTS suggestion)
-   - "Are there things you always want to happen before/after a skill runs? Like validation, logging, or notifications?" (leads to hooks suggestion)
-   - "Do any of your skills produce a lot of output that clutters the conversation?" (leads to context: fork suggestion)
-   - "Do your skills load automatically when you expect them to, or do you find yourself typing the slash command every time?" (leads to description trigger quality)
-   - "Is your SKILL.md getting long? Over 300 lines?" (leads to supporting files & progressive disclosure)
-3. For hooks specifically, ask follow-up questions to understand the workflow:
-   - What should trigger the hook? (before a tool runs? after? on a specific tool?)
-   - What should the hook do? (validate, log, notify, block?)
-   - Should it only run during a specific skill, or always?
-   - Don't prescribe hooks unless the user describes a concrete pain. Hooks add complexity.
+2. Ask up to 5 questions, one at a time. Each question should connect a specific finding from the `claude-code-guide` evaluation to the user's experience. Examples:
+   - If the agent found instructions that should be hooks: "I see your [skill-name] has rules like 'before writing, validate X'. Does this actually get followed reliably?" (leads to hooks/scripts suggestion)
+   - If the agent found missing dynamic injection: "Your [skill-name] reads [file] every time it runs. Does it feel slow to start?"
+   - If the agent found overlap: "Your [skill-a] and [skill-b] both mention [keyword]. Do they ever conflict?"
+   - Derive questions from the actual findings. Don't ask about things the agent didn't flag.
+3. For mechanism changes (hooks, scripts, dynamic injection), ask follow-up questions to understand the user's workflow before prescribing. These add complexity and should only be suggested when the user confirms the pain.
 4. After questions, present a tailored prescription connecting each finding to the user's stated pain
-5. Don't dump all checklist items. Only surface what's relevant to their experience.
+5. Only surface findings relevant to the user's experience. Don't dump everything.
 
 End with: "Run `/skill-doctor:treat` to apply these fixes."
 
